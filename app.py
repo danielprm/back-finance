@@ -1,0 +1,24 @@
+from flask import Flask
+from flask_cors import CORS
+
+from config import Config
+from extensions import db
+
+app = Flask(__name__)
+app.config.from_object(Config)
+
+db.init_app(app)
+
+# Libera CORS para toda origem: o front-end roda como arquivo local (file://),
+# que o navegador trata como origem "null", então precisa ser aceito aqui.
+CORS(app)
+
+from models.categoria import Categoria
+from models.despesa_fixa import DespesaFixa
+from models.transacao import Transacao
+
+with app.app_context():
+    db.create_all()
+
+if __name__ == "__main__":
+    app.run(debug=True)
