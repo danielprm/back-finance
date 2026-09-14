@@ -17,6 +17,20 @@ from models.categoria import Categoria
 from models.despesa_fixa import DespesaFixa
 from models.transacao import Transacao
 
+from flask_restx import Api
+
+api = Api(
+    app,
+    version="1.0",
+    title="API Controle de Gastos",
+    description="API para controle de gastos pessoais com despesas fixas recorrentes.",
+    doc="/swagger",
+)
+
+from resources.categorias import ns as categorias_ns
+
+api.add_namespace(categorias_ns, path="/categorias")
+
 with app.app_context():
     db.create_all()
 
