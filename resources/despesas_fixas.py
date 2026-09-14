@@ -2,6 +2,7 @@ from flask import request
 from flask_restx import Namespace, Resource, abort, fields
 
 from extensions import db
+from models.categoria import Categoria
 from models.despesa_fixa import DespesaFixa
 
 ns = Namespace("despesas-fixas", description="Cadastro de despesas fixas recorrentes")
@@ -9,8 +10,8 @@ ns = Namespace("despesas-fixas", description="Cadastro de despesas fixas recorre
 despesa_fixa_model = ns.model("DespesaFixa", {
     "id": fields.Integer(readonly=True),
     "descricao": fields.String(required=True),
-    "valor": fields.Float(required=True),
-    "dia_vencimento": fields.Integer(required=True, description="Dia do mês (1-31) em que a despesa vence"),
+    "valor": fields.Float(required=True, min=0),
+    "dia_vencimento": fields.Integer(required=True, min=1, max=31, description="Dia do mês (1-31) em que a despesa vence"),
     "categoria_id": fields.Integer(required=True),
     "ativo": fields.Boolean(default=True),
 })
@@ -28,6 +29,8 @@ class DespesaFixaListResource(Resource):
     def post(self):
         """Cadastra uma nova despesa fixa."""
         dados = request.get_json()
+        if Categoria.query.get(dados["categoria_id"]) is None:
+            abort(400, "Categoria informada não existe")
         despesa = DespesaFixa(
             descricao=dados["descricao"],
             valor=dados["valor"],
@@ -42,6 +45,7 @@ class DespesaFixaListResource(Resource):
 
 @ns.route("/<int:despesa_id>")
 @ns.response(404, "Despesa fixa não encontrada")
+@ns.response(409, "Despesa fixa em uso")
 class DespesaFixaResource(Resource):
     @ns.expect(despesa_fixa_model, validate=True)
     @ns.marshal_with(despesa_fixa_model)
@@ -64,6 +68,8 @@ class DespesaFixaResource(Resource):
         despesa = DespesaFixa.query.get(despesa_id)
         if despesa is None:
             abort(404, "Despesa fixa não encontrada")
+        if despesa.transacoes:
+            abort(409, "Despesa fixa já gerou lançamentos; desative-a em vez de excluir")
         db.session.delete(despesa)
         db.session.commit()
         return "", 204
