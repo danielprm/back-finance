@@ -28,8 +28,10 @@ api = Api(
 )
 
 from resources.categorias import ns as categorias_ns
+from resources.despesas_fixas import ns as despesas_fixas_ns
 
 api.add_namespace(categorias_ns, path="/categorias")
+api.add_namespace(despesas_fixas_ns, path="/despesas-fixas")
 
 with app.app_context():
     db.create_all()
