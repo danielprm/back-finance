@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect
 from flask_cors import CORS
 
 from config import Config
@@ -19,6 +19,13 @@ from models.transacao import Transacao
 
 from flask_restx import Api
 
+
+@app.route("/")
+def raiz():
+    """Redireciona a raiz da aplicação para a documentação Swagger."""
+    return redirect("/swagger")
+
+
 api = Api(
     app,
     version="1.0",
@@ -26,6 +33,7 @@ api = Api(
     description="API para controle de gastos pessoais com despesas fixas recorrentes.",
     doc="/swagger",
 )
+
 
 from resources.categorias import ns as categorias_ns
 from resources.despesas_fixas import ns as despesas_fixas_ns
