@@ -64,3 +64,40 @@ O banco SQLite (`gastos.db`) é criado automaticamente na primeira execução.
 | Resumo | `/resumo` | GET |
 
 Detalhes completos de cada rota (parâmetros, corpo de requisição, respostas) estão documentados no Swagger UI.
+
+## Como testar
+
+Com a aplicação rodando (`python app.py`), a forma mais rápida de testar é pelo **Swagger UI** em [http://127.0.0.1:5000](http://127.0.0.1:5000): expanda qualquer rota, clique em "Try it out", edite o corpo de exemplo e clique em "Execute".
+
+Alternativamente, o fluxo completo pode ser testado via `curl`, do terminal:
+
+```bash
+# 1. Criar uma categoria
+curl -X POST http://127.0.0.1:5000/categorias \
+  -H "Content-Type: application/json" \
+  -d '{"nome": "Moradia", "cor": "#4A90D9"}'
+
+# 2. Listar categorias (confirme o id retornado acima)
+curl http://127.0.0.1:5000/categorias
+
+# 3. Cadastrar uma despesa fixa (use o categoria_id do passo 1)
+curl -X POST http://127.0.0.1:5000/despesas-fixas \
+  -H "Content-Type: application/json" \
+  -d '{"descricao": "Aluguel", "valor": 1500, "dia_vencimento": 5, "categoria_id": 1, "ativo": true}'
+
+# 4. Gerar os lançamentos do mês a partir das despesas fixas ativas
+curl -X POST http://127.0.0.1:5000/transacoes/gerar-fixas
+
+# 5. Gerar novamente: deve retornar {"geradas": 0}, provando que não duplica
+curl -X POST http://127.0.0.1:5000/transacoes/gerar-fixas
+
+# 6. Criar um lançamento manual (despesa ou receita avulsa)
+curl -X POST http://127.0.0.1:5000/transacoes \
+  -H "Content-Type: application/json" \
+  -d '{"descricao": "Salário", "valor": 3000, "tipo": "receita", "data": "2026-09-05", "categoria_id": 1}'
+
+# 7. Ver o resumo do mês (saldo, totais por categoria, fixo x eventual)
+curl "http://127.0.0.1:5000/resumo?mes=9&ano=2026"
+```
+
+O banco (`gastos.db`) é recriado do zero apagando o arquivo e rodando `python app.py` novamente.
