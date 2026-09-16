@@ -28,6 +28,8 @@ resumo_model = ns.model("Resumo", {
 
 @ns.route("")
 class ResumoResource(Resource):
+    @ns.param("mes", "Mês (1-12); padrão: mês atual", type=int)
+    @ns.param("ano", "Ano com 4 dígitos; padrão: ano atual", type=int)
     @ns.marshal_with(resumo_model)
     def get(self):
         """Retorna saldo, totais por categoria e fixo x eventual do mês informado (padrão: mês atual)."""

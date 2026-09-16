@@ -6,6 +6,7 @@ from flask_restx import Namespace, Resource, abort, fields
 from sqlalchemy import extract
 
 from extensions import db
+from models.categoria import Categoria
 from models.despesa_fixa import DespesaFixa
 from models.transacao import Transacao
 
@@ -14,8 +15,8 @@ ns = Namespace("transacoes", description="Lançamentos de despesas e receitas")
 transacao_model = ns.model("Transacao", {
     "id": fields.Integer(readonly=True),
     "descricao": fields.String(required=True),
-    "valor": fields.Float(required=True),
-    "tipo": fields.String(required=True, description='"despesa" ou "receita"'),
+    "valor": fields.Float(required=True, min=0),
+    "tipo": fields.String(required=True, enum=["despesa", "receita"], description='"despesa" ou "receita"'),
     "data": fields.String(required=True, description="Data no formato AAAA-MM-DD"),
     "categoria_id": fields.Integer(required=True),
     "despesa_fixa_id": fields.Integer(readonly=True),
@@ -28,6 +29,8 @@ geracao_model = ns.model("GeracaoFixas", {
 
 @ns.route("")
 class TransacaoListResource(Resource):
+    @ns.param("mes", "Mês (1-12); padrão: mês atual", type=int)
+    @ns.param("ano", "Ano com 4 dígitos; padrão: ano atual", type=int)
     @ns.marshal_list_with(transacao_model)
     def get(self):
         """Lista transações, com filtro opcional por mês (?mes=) e ano (?ano=)."""
@@ -45,11 +48,17 @@ class TransacaoListResource(Resource):
     def post(self):
         """Cria um lançamento manual de despesa ou receita."""
         dados = request.get_json()
+        if Categoria.query.get(dados["categoria_id"]) is None:
+            abort(400, "Categoria informada não existe")
+        try:
+            data_transacao = date.fromisoformat(dados["data"])
+        except ValueError:
+            abort(400, "Data inválida: use o formato AAAA-MM-DD")
         transacao = Transacao(
             descricao=dados["descricao"],
             valor=dados["valor"],
             tipo=dados["tipo"],
-            data=date.fromisoformat(dados["data"]),
+            data=data_transacao,
             categoria_id=dados["categoria_id"],
         )
         db.session.add(transacao)

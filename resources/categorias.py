@@ -22,9 +22,12 @@ class CategoriaListResource(Resource):
 
     @ns.expect(categoria_model, validate=True)
     @ns.marshal_with(categoria_model, code=201)
+    @ns.response(409, "Categoria já existe")
     def post(self):
         """Cadastra uma nova categoria."""
         dados = request.get_json()
+        if Categoria.query.filter_by(nome=dados["nome"]).first() is not None:
+            abort(409, "Já existe uma categoria com esse nome")
         categoria = Categoria(nome=dados["nome"], cor=dados["cor"])
         db.session.add(categoria)
         db.session.commit()
@@ -33,6 +36,7 @@ class CategoriaListResource(Resource):
 
 @ns.route("/<int:categoria_id>")
 @ns.response(404, "Categoria não encontrada")
+@ns.response(409, "Categoria em uso")
 class CategoriaResource(Resource):
     @ns.marshal_with(categoria_model)
     def get(self, categoria_id):
@@ -47,6 +51,10 @@ class CategoriaResource(Resource):
         categoria = Categoria.query.get(categoria_id)
         if categoria is None:
             abort(404, "Categoria não encontrada")
+        # Bloqueia a exclusão em vez de apagar em cascata: transações e despesas
+        # fixas já lançadas são histórico do usuário e não podem ser perdidas.
+        if categoria.transacoes or categoria.despesas_fixas:
+            abort(409, "Categoria possui lançamentos ou despesas fixas vinculados")
         db.session.delete(categoria)
         db.session.commit()
         return "", 204
