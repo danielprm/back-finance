@@ -69,7 +69,7 @@ Detalhes completos de cada rota (parâmetros, corpo de requisição, respostas) 
 
 Com a aplicação rodando (`python app.py`), a forma mais rápida de testar é pelo **Swagger UI** em [http://127.0.0.1:5000](http://127.0.0.1:5000): expanda qualquer rota, clique em "Try it out", edite o corpo de exemplo e clique em "Execute".
 
-Alternativamente, o fluxo completo pode ser testado via `curl`, do terminal:
+Alternativamente, o fluxo completo pode ser testado via `curl`, **direto no terminal** (não cole estes comandos dentro dos campos do Swagger UI — lá o campo espera só o JSON do corpo, sem o `curl` e sem as aspas de shell):
 
 ```bash
 # 1. Criar uma categoria
