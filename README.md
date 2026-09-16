@@ -67,37 +67,31 @@ Detalhes completos de cada rota (parâmetros, corpo de requisição, respostas) 
 
 ## Como testar
 
-Com a aplicação rodando (`python app.py`), a forma mais rápida de testar é pelo **Swagger UI** em [http://127.0.0.1:5000](http://127.0.0.1:5000): expanda qualquer rota, clique em "Try it out", edite o corpo de exemplo e clique em "Execute".
+Com a aplicação rodando (`python app.py`), acesse o **Swagger UI** em [http://127.0.0.1:5000](http://127.0.0.1:5000). Para cada rota abaixo: expanda o bloco, clique em **"Try it out"**, cole apenas o JSON indicado no campo "payload" (sem `curl`, sem aspas de shell) e clique em **"Execute"**.
 
-Alternativamente, o fluxo completo pode ser testado via `curl`, **direto no terminal** (não cole estes comandos dentro dos campos do Swagger UI — lá o campo espera só o JSON do corpo, sem o `curl` e sem as aspas de shell):
+Sequência sugerida para testar o fluxo completo:
 
-```bash
-# 1. Criar uma categoria
-curl -X POST http://127.0.0.1:5000/categorias \
-  -H "Content-Type: application/json" \
-  -d '{"nome": "Moradia", "cor": "#4A90D9"}'
+1. **`POST /categorias`** — cria uma categoria:
+   ```json
+   {"nome": "Moradia", "cor": "#4A90D9"}
+   ```
 
-# 2. Listar categorias (confirme o id retornado acima)
-curl http://127.0.0.1:5000/categorias
+2. **`GET /categorias`** — não precisa de payload, só "Execute". Confirme o `id` retornado (normalmente `1`).
 
-# 3. Cadastrar uma despesa fixa (use o categoria_id do passo 1)
-curl -X POST http://127.0.0.1:5000/despesas-fixas \
-  -H "Content-Type: application/json" \
-  -d '{"descricao": "Aluguel", "valor": 1500, "dia_vencimento": 5, "categoria_id": 1, "ativo": true}'
+3. **`POST /despesas-fixas`** — cadastra uma despesa fixa (use o `categoria_id` do passo 1):
+   ```json
+   {"descricao": "Aluguel", "valor": 1500, "dia_vencimento": 5, "categoria_id": 1, "ativo": true}
+   ```
 
-# 4. Gerar os lançamentos do mês a partir das despesas fixas ativas
-curl -X POST http://127.0.0.1:5000/transacoes/gerar-fixas
+4. **`POST /transacoes/gerar-fixas`** — sem payload, só "Execute". Gera os lançamentos do mês a partir das despesas fixas ativas.
 
-# 5. Gerar novamente: deve retornar {"geradas": 0}, provando que não duplica
-curl -X POST http://127.0.0.1:5000/transacoes/gerar-fixas
+5. **`POST /transacoes/gerar-fixas`** de novo — deve retornar `{"geradas": 0}`, provando que não duplica lançamentos já gerados.
 
-# 6. Criar um lançamento manual (despesa ou receita avulsa)
-curl -X POST http://127.0.0.1:5000/transacoes \
-  -H "Content-Type: application/json" \
-  -d '{"descricao": "Salário", "valor": 3000, "tipo": "receita", "data": "2026-09-05", "categoria_id": 1}'
+6. **`POST /transacoes`** — cria um lançamento manual (despesa ou receita avulsa):
+   ```json
+   {"descricao": "Salário", "valor": 3000, "tipo": "receita", "data": "2026-09-05", "categoria_id": 1}
+   ```
 
-# 7. Ver o resumo do mês (saldo, totais por categoria, fixo x eventual)
-curl "http://127.0.0.1:5000/resumo?mes=9&ano=2026"
-```
+7. **`GET /resumo`** — preencha os parâmetros `mes` e `ano` (ex: `9` e `2026`) e clique "Execute". Mostra saldo, totais por categoria e comparação fixo x eventual.
 
 O banco (`gastos.db`) é recriado do zero apagando o arquivo e rodando `python app.py` novamente.
